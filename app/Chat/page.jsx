@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'; // Added React import
-import Chat from './Chat';
+import Chat from './chat';
 
 function SearchBarFallback() {
   return <>placeholder</>;
