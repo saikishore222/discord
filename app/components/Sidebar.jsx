@@ -28,7 +28,7 @@ const Sidebar = () => {
 
     return (
         <>
-            {isMobile ? null : (
+            {isMobile ? null  : (
                 <div className="w-72 mt-16 bg-white h-full fixed shadow-md opacity-100" style={{ fontFamily: 'Arial, sans-serif' }}>
                     <div className="flex flex-col p-4 space-y-2">
                         {items.map((item, index) => (

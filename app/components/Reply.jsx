@@ -2,12 +2,15 @@ import { auth } from '../firebase';
 import { listenForComments, addCommentToMessage } from '../firebase';
 import { useState,useEffect,useRef } from 'react';
 import { FiSend, FiCornerUpLeft, FiThumbsUp } from 'react-icons/fi';
+import { useMediaQuery } from '@react-hook/media-query';
+
 
 
 const ReplySection = ({ message ,type,setShowReplySection,setSelectedMessage}) => {
     const [comments, setComments] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [likes, setLikes] = useState(message.likes);
+    const isMobile = useMediaQuery('(max-width: 767px)'); // Define the mobile breakpoint
     const commentsEndRef = useRef(null); // Ref for scrolling to end of comments
 
 
@@ -66,7 +69,7 @@ const ReplySection = ({ message ,type,setShowReplySection,setSelectedMessage}) =
     };
 
 return (
-    <div className="fixed top-15 right-0 h-full w-1/4 bg-white z-10 p-4 shadow-lg overflow-y-auto">
+    <div className={`fixed top-15  h-full w-1/4 bg-white z-10 p-4 shadow-lg overflow-y-auto ${isMobile ? 'left-0 w-full':'right-0'}`}>
         <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Replying to:</h3>
             <button

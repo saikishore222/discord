@@ -182,16 +182,16 @@ const Chat = () => {
     };
 
     return (
-        <div className={`flex flex-col w-full  fixed ${showReplySection ? 'w-[50rem]' : ''} bg-gray-100 ${isMobile ? 'ml-0 top-10 h-[30rem] overflow-y-auto' : 'ml-72 h-[40rem]'}`} style={{ marginTop: '68px' }}>
+        <div className={`flex flex-col  ${showReplySection ? 'w-[50rem]' : ''} bg-gray-100 ${isMobile ? 'ml-0 fixed top-12 h-[50rem] overflow-y-auto w-full' : 'ml-72 fixed top-1 h-[44rem] w-4/5'}`} style={{ marginTop: '68px' }}>
             {/* Header */}
             {user ? (
                 <React.Fragment>
-                    <div className="p-4 shadow-lg bg-white"> {/* Center the chat */}
+                    <div className="p-4 shadow-lg bg-white "> {/* Center the chat */}
                         <h2 className="text-lg font-semibold text-gray-800"># {type}</h2>
                     </div>
 
                     {/* Messages display area */}
-                    <div className="flex-grow p-4 overflow-y-auto ">
+                    <div className="flex flex-col p-2 mt-4 overflow-y-auto h-[44rem]">
                         {messages.map((message, index) => (
                             <div key={message.id} className="flex flex-col mb-3">
                                 {/* Display date with border */}
@@ -201,7 +201,7 @@ const Chat = () => {
                                     </div>
                                 ) : null}
                                 {/* Individual message with time */}
-                                <div className={`flex items-start space-x-4`}>
+                                <div className={`flex items-start space-x-4  p-4`}>
                                     <img src={message.userPhoto} alt="Profile" className="w-10 h-10 rounded-full" />
                                     <div className="bg-gray-200 rounded-lg p-4 w-full">
                                         <div className="flex justify-between items-center mb-2 mt-0">
@@ -259,9 +259,8 @@ const Chat = () => {
                             </div>
                         ))}
                         <div ref={messagesEndRef} />
-                        </div>
-                    {/* Footer */}
-                    <div className={`fixed bottom-0 p-4 bg-white mb-0 mt-2 overflow-y-auto  ${isMobile ? 'w-full':'w-4/5'}`}> {/* Center the chat */}
+                    </div>                    {/* Footer */}
+                    <div className={`p-4 bg-white mb-2 mt-2 w-full  ${isMobile ? 'w-full ml-0':'w-4/5'}`}> {/* Center the chat */}
                         <div className="flex items-center">
                             <input
                                 type="text"
@@ -278,8 +277,6 @@ const Chat = () => {
                             />
                         </div>
                     </div>
-
-
                     {/* Render reply section if showReplySection is true */}
                     {showReplySection && <ReplySection message={selectedMessage} type={type} 
                     setShowReplySection={setShowReplySection}

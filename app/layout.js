@@ -17,7 +17,7 @@ const RootLayout = ({ children }) => {
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <div className="flex flex-grow">
-            <Sidebar />
+            <Sidebar show={false} />
             <div className="flex-grow h-full w-3/4 overflow-y-auto">{children}</div>
           </div>
         </div>
