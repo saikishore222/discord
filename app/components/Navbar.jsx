@@ -83,7 +83,7 @@ const Navbar = () => {
       </nav>
       {isMobile && showMenu && 
 
-<div className="w-72 mt-32 bg-white h-full fixed shadow-md opacity-100 z-50" style={{ fontFamily: 'Arial, sans-serif' }}>
+<div className="w-72 bg-white h-full fixed shadow-md opacity-100 z-50" style={{ fontFamily: 'Arial, sans-serif',marginTop: '115px' }}>
 <div className="flex flex-col p-4 space-y-2">
     {items.map((item, index) => (
         <Link key={index} href="/chat?type=[type]" as={item.href}>
