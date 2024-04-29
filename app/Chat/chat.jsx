@@ -8,7 +8,7 @@ import { auth } from '../firebase';
 import { updateLikesInFirebase } from '../firebase';
 import ReplySection from '../components/Reply.jsx'; // Update the path as per your file structure
 import { listenForMessages } from '../firebase'; // Update the path as per your file structure
-import { addMessageToChannel, addCommentToMessage, getAllMessagesFromChannel, getAllCommentsFromMessage ,addMessageToPrivateChannel} from '../firebase';
+import { addMessageToChannel, addCommentToMessage, getAllMessagesFromChannel, getAllCommentsFromMessage, addMessageToPrivateChannel } from '../firebase';
 
 const Chat = () => {
     const searchParams = useSearchParams();
@@ -41,26 +41,26 @@ const Chat = () => {
 
     useEffect(() => {
         const search = searchParams.get('type');
-        setType(search || '');    
+        setType(search || '');
         setUser(auth.currentUser);
         // Load initial messages from Firebase
         const loadMessages = async () => {
             const fetchedMessages = await getAllMessagesFromChannel(search || '');
             setMessages(fetchedMessages);
         };
-    
+
         loadMessages();
         console.log('Messages loaded successfully.');
-    
+
         // Start listening for real-time messages
         const unsubscribeMessages = listenForMessages(search || '', (realtimeMessages) => {
             setMessages(realtimeMessages);
         });
-    
+
         // Clean up the listener when the component unmounts
         return () => unsubscribeMessages();
     }, [searchParams]);
-    
+
 
     const handleSendMessage = async () => {
         if (inputValue.trim() !== '') {
@@ -80,16 +80,13 @@ const Chat = () => {
                     likes: 0,
                     timestamp: Date.now(),
                 };
-    
+
                 setMessages((prevMessages) => [...prevMessages, newMessage]);
                 setInputValue('');
-                if(type === 'Private')
-                {
+                if (type === 'Private') {
                     await addMessageToPrivateChannel({ text: inputValue }, setImageLoading);
-                }
-                else
-                {
-                await addMessageToChannel(type, { text: inputValue }, setImageLoading);
+                } else {
+                    await addMessageToChannel(type, { text: inputValue }, setImageLoading);
                 }
             }
         }
@@ -111,8 +108,7 @@ const Chat = () => {
     };
 
     const handleLike = async (message) => {
-        if(like)
-        {
+        if (like) {
             setLike(false);
             const updatedLikesCount = message.likes - 1;
             await updateLikesInFirebase(type, message.id, updatedLikesCount);
@@ -121,9 +117,7 @@ const Chat = () => {
                     msg.id === message.id ? { ...msg, likes: updatedLikesCount } : msg
                 )
             );
-        }
-        else
-        {
+        } else {
             setLike(true);
             const updatedLikesCount = message.likes + 1;
             await updateLikesInFirebase(type, message.id, updatedLikesCount);
@@ -133,27 +127,8 @@ const Chat = () => {
                 )
             );
         }
-
-        // Check if the message ID is already in the likedMessages set
-        // const isLiked = likedMessages.has(message.id);
-        // setMessages((prevMessages) =>
-        //     prevMessages.map((msg) =>
-        //         msg.id === message.id ? { ...msg, likes: updatedLikesCount } : msg
-        //     )
-        // );
-    
-        // // Update likedMessages set based on like/unlike action
-        // setLikedMessages((prevLikedMessages) => {
-        //     const newLikedMessages = new Set(prevLikedMessages);
-        //     if (isLiked) {
-        //         newLikedMessages.delete(message.id); // Remove from likedMessages if unliked
-        //     } else {
-        //         newLikedMessages.add(message.id); // Add to likedMessages if liked
-        //     }
-        //     return newLikedMessages;
-        // });
     };
-    
+
 
     const handleReply = (message) => {
         setShowReplySection(true);
@@ -165,7 +140,7 @@ const Chat = () => {
         const minutes = date.getMinutes().toString().padStart(2, '0');
         return `${hours}:${minutes}`;
     };
-    
+
 
     const formatDate = (date) => {
         const today = new Date();
@@ -182,16 +157,16 @@ const Chat = () => {
     };
 
     return (
-        <div className={`flex flex-col  ${showReplySection ? 'w-[50rem]' : ''} bg-gray-100 ${isMobile ? 'ml-0 fixed top-12 h-[50rem] overflow-y-auto w-full' : 'ml-72 fixed top-1 h-[44rem] w-4/5'}`} style={{ marginTop: '68px' }}>
+        <div className={`flex flex-col bg-gray-100 border-2 border-indigo-500 ${isMobile ? 'fixed top-12 h-[670px]' : 'fixed top-1 h-[45rem] w-4/5 ml-72'}`} style={{ marginTop: '68px' }}>
             {/* Header */}
             {user ? (
                 <React.Fragment>
-                    <div className="p-4 shadow-lg bg-white "> {/* Center the chat */}
+                    <div className={`p-4 shadow-lg bg-white ${isMobile ? 'w-full': ''}`}>
                         <h2 className="text-lg font-semibold text-gray-800"># {type}</h2>
                     </div>
 
                     {/* Messages display area */}
-                    <div className="flex flex-col p-2 mt-4 overflow-y-auto h-[44rem]">
+                    <div className="flex flex-col flex-grow p-2 mt-4 overflow-y-auto">
                         {messages.map((message, index) => (
                             <div key={message.id} className="flex flex-col mb-3">
                                 {/* Display date with border */}
@@ -201,7 +176,7 @@ const Chat = () => {
                                     </div>
                                 ) : null}
                                 {/* Individual message with time */}
-                                <div className={`flex items-start space-x-4  p-4`}>
+                                <div className={`flex items-start space-x-4 p-4 `}>
                                     <img src={message.userPhoto} alt="Profile" className="w-10 h-10 rounded-full" />
                                     <div className="bg-gray-200 rounded-lg p-4 w-full">
                                         <div className="flex justify-between items-center mb-2 mt-0">
@@ -209,17 +184,15 @@ const Chat = () => {
                                             <span className="text-sm text-gray-500">{formatTime(new Date(message.timestamp))}</span>
                                         </div>
                                         <p className="text-gray-600 mb-5">{message.text}</p>
-                          
-            <img
-                src={message.imageUrl}
-                alt="Message Image"
-                width={300}
-                height={300}
-                className="rounded-lg"
-            />
-            <p className='text-sm text-gray-500 mt-1'>Image generated by Model</p>
-
-                                        { type !== 'Private' && (
+                                        <img
+                                            src={message.imageUrl}
+                                            alt="Message Image"
+                                            width={300}
+                                            height={300}
+                                            className="rounded-lg"
+                                        />
+                                        <p className='text-sm text-gray-500 mt-1'>Image generated by Model</p>
+                                        {type !== 'Private' && (
                                             <div className="flex items-center space-x-4 mt-5">
                                                 {/* Reply icon */}
                                                 <FiCornerUpLeft
@@ -236,52 +209,14 @@ const Chat = () => {
                                                 />
                                                 {/* Display the number of likes */}
                                                 <span className="text-sm text-gray-500">{message.likes}</span>
-                                                {/* Display the number of replies */}
                                             </div>
                                         )}
-                                        {/* <div className="flex items-center space-x-4 mt-5">
-                                            <FiCornerUpLeft
-                                                className="cursor-pointer text-gray-500 hover:text-gray-700"
-                                                size={18}
-                                                onClick={() => handleReply(message)}
-                                            />
-                                             <span className="text-sm text-gray-500"> {message.replies}</span>
-
-                                            <FiThumbsUp
-                                                className={`cursor-pointer text-gray-500 hover:text-gray-700 ${like} ? 'text-blue-500' : ''}`}
-                                                size={18}
-                                                onClick={() => handleLike(message)}
-                                            />
-                                            <span className="text-sm text-gray-500">{message.likes}</span>
-                                        </div> */}
                                     </div>
-                                </div>                
+                                </div>
                             </div>
                         ))}
                         <div ref={messagesEndRef} />
-                    </div>                    {/* Footer */}
-                    <div className={`p-4 bg-white mb-2 mt-2 w-full  ${isMobile ? 'w-full ml-0':'w-4/5'}`}> {/* Center the chat */}
-                        <div className="flex items-center">
-                            <input
-                                type="text"
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Type your message..."
-                                className="flex-grow border border-gray-300 rounded-md p-2 mr-2 resize-none text-black focus:outline-none"
-                            />
-                            <FiSend
-                                className="cursor-pointer text-blue-500 hover:text-blue-600"
-                                size={36}
-                                onClick={handleSendMessage}
-                            />
-                        </div>
                     </div>
-                    {/* Render reply section if showReplySection is true */}
-                    {showReplySection && <ReplySection message={selectedMessage} type={type} 
-                    setShowReplySection={setShowReplySection}
-                    setSelectedMessage={setSelectedMessage}
-                    />}
                 </React.Fragment>
             ) : (
                 <div className="flex flex-col items-center justify-center h-full">
@@ -290,6 +225,29 @@ const Chat = () => {
                     </p>
                 </div>
             )}
+
+            {/* Footer */}
+            <div className={`p-4 bg-white mb-0 ${isMobile ? 'w-full' : 'w-full ml-0'}`}>
+                <div className="flex items-center">
+                <div ref={messagesEndRef} />
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your message..."
+                        className="flex-grow border border-gray-300 rounded-md p-2 mr-2 resize-none text-black focus:outline-none"
+                    />
+                    <FiSend
+                        className="cursor-pointer text-blue-500 hover:text-blue-600"
+                        size={36}
+                        onClick={handleSendMessage}
+                    />
+                </div>
+            </div>
+
+            {/* Render reply section if showReplySection is true */}
+            {showReplySection && <ReplySection message={selectedMessage} type={type} setShowReplySection={setShowReplySection} setSelectedMessage={setSelectedMessage} />}
         </div>
     );
 };
