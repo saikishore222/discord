@@ -2,24 +2,20 @@ import { auth } from '../firebase';
 import { listenForComments, addCommentToMessage } from '../firebase';
 import { useState,useEffect,useRef } from 'react';
 import { FiSend, FiCornerUpLeft, FiThumbsUp } from 'react-icons/fi';
-import { updateLikesInFirebase } from '../firebase';
 
 
 const ReplySection = ({ message ,type,setShowReplySection,setSelectedMessage}) => {
     const [comments, setComments] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [likes, setLikes] = useState(message.likes);
-    const [like, setLike] = useState(false);
     const commentsEndRef = useRef(null); // Ref for scrolling to end of comments
-    
-    useEffect(() => {
-        // Function to handle updating comments based on the selected message
-        const updateComments = (newComments) => {
-            setComments(newComments);
-            scrollToBottom();
-        };
 
-        const unsubscribeComments = listenForComments(type, message.id, updateComments);
+
+    useEffect(() => {
+        const unsubscribeComments = listenForComments(type, message.id, (newComments) => {
+            // Append new comments to the existing comments array
+            setComments((prevComments) => [...prevComments, ...newComments]);
+        });
 
         return () => unsubscribeComments(); // Clean up the listener
     }, [type, message.id]);
@@ -31,49 +27,16 @@ const ReplySection = ({ message ,type,setShowReplySection,setSelectedMessage}) =
     };
 
     const handleLike = async (message) => {
-        if(like)
-        {
-            setLike(false);
-            const updatedLikesCount = message.likes - 1;
-            await updateLikesInFirebase(type, message.id, updatedLikesCount);
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                    msg.id === message.id ? { ...msg, likes: updatedLikesCount } : msg
-                )
-            );
-        }
-        else
-        {
-            setLike(true);
-            const updatedLikesCount = message.likes + 1;
-            await updateLikesInFirebase(type, message.id, updatedLikesCount);
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                    msg.id === message.id ? { ...msg, likes: updatedLikesCount } : msg
-                )
-            );
-        }
-
-        // Check if the message ID is already in the likedMessages set
-        // const isLiked = likedMessages.has(message.id);
-        // setMessages((prevMessages) =>
-        //     prevMessages.map((msg) =>
-        //         msg.id === message.id ? { ...msg, likes: updatedLikesCount } : msg
-        //     )
-        // );
+        // Update the like count in Firebase
+        await updateLikesInFirebase(message.channelId, message.id, message.likes + 1);
     
-        // // Update likedMessages set based on like/unlike action
-        // setLikedMessages((prevLikedMessages) => {
-        //     const newLikedMessages = new Set(prevLikedMessages);
-        //     if (isLiked) {
-        //         newLikedMessages.delete(message.id); // Remove from likedMessages if unliked
-        //     } else {
-        //         newLikedMessages.add(message.id); // Add to likedMessages if liked
-        //     }
-        //     return newLikedMessages;
-        // });
+        // Update the local state with the new like count
+        setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+                msg.id === message.id ? { ...msg, likes: msg.likes + 1 } : msg
+            )
+        );
     };
-    
 
     useEffect(() => {
         scrollToBottom();
@@ -125,9 +88,6 @@ return (
                         <span className="text-sm text-gray-500 ml-2">{formatTime(new Date(message.timestamp))}</span>
                     </div>
                     <p className="text-gray-800">{message.text}</p>
-                    {message.imageUrl && (
-                        <img src={message.imageUrl} alt="Message" width={200} height={200} />
-                    )}
                     <div className="flex items-center space-x-4 mt-2">
                         <FiThumbsUp
                             className="cursor-pointer text-gray-500 hover:text-gray-700"
@@ -167,7 +127,7 @@ return (
             </div>
         </div>
         {/* Comment input */}
-        <div className="flex items-center mt-4 mb-28">
+        <div className="flex items-center mt-4">
             <input
                 type="text"
                 value={inputValue}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useMediaQuery } from '@react-hook/media-query';
 import { FiSend, FiCornerUpLeft, FiThumbsUp } from 'react-icons/fi';
 import { useSearchParams } from 'next/navigation';
 import { auth } from '../firebase';
@@ -20,6 +21,7 @@ const Chat = () => {
     const [showReplySection, setShowReplySection] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null); // Track which message is being replied to
     const [like, setLike] = useState(false);
+    const isMobile = useMediaQuery('(max-width: 767px)'); // Define the mobile breakpoint
 
     const handleImageLoad = () => {
         // Handle image loading completion if needed
@@ -180,21 +182,21 @@ const Chat = () => {
     };
 
     return (
-        <div className={`flex flex-col h-[700px]  ${showReplySection ? 'w-[50rem]' : ''} bg-gray-100 ml-72`} style={{ marginTop: '68px' }}>
+        <div className={`flex flex-col w-full  fixed ${showReplySection ? 'w-[50rem]' : ''} bg-gray-100 ${isMobile ? 'ml-0 top-10 h-[30rem] overflow-y-auto' : 'ml-72 h-[40rem]'}`} style={{ marginTop: '68px' }}>
             {/* Header */}
             {user ? (
                 <React.Fragment>
-                    <div className="p-4 shadow-lg bg-white">
+                    <div className="p-4 shadow-lg bg-white"> {/* Center the chat */}
                         <h2 className="text-lg font-semibold text-gray-800"># {type}</h2>
                     </div>
 
                     {/* Messages display area */}
-                    <div className="flex-grow p-4 overflow-y-auto">
+                    <div className="flex-grow p-4 overflow-y-auto ">
                         {messages.map((message, index) => (
                             <div key={message.id} className="flex flex-col mb-3">
                                 {/* Display date with border */}
                                 {index === 0 || formatDate(new Date(message.timestamp)) !== formatDate(new Date(messages[index - 1].timestamp)) ? (
-                                    <div className="border-b border-gray-300 pb-2 mb-2">
+                                    <div className="border-b border-gray-300 pb-2 mb-2 mx-auto">
                                         <div className="text-lg text-gray-500 text-center">{formatDate(new Date(message.timestamp))}</div>
                                     </div>
                                 ) : null}
@@ -257,10 +259,9 @@ const Chat = () => {
                             </div>
                         ))}
                         <div ref={messagesEndRef} />
-                    </div>
-
+                        </div>
                     {/* Footer */}
-                    <div className="p-4 bg-white mb-5">
+                    <div className={`fixed bottom-0 p-4 bg-white mb-0 mt-2 overflow-y-auto  ${isMobile ? 'w-full':'w-4/5'}`}> {/* Center the chat */}
                         <div className="flex items-center">
                             <input
                                 type="text"
@@ -270,7 +271,6 @@ const Chat = () => {
                                 placeholder="Type your message..."
                                 className="flex-grow border border-gray-300 rounded-md p-2 mr-2 resize-none text-black focus:outline-none"
                             />
-                            {/* Replace send button with an icon */}
                             <FiSend
                                 className="cursor-pointer text-blue-500 hover:text-blue-600"
                                 size={36}
@@ -278,6 +278,7 @@ const Chat = () => {
                             />
                         </div>
                     </div>
+
 
                     {/* Render reply section if showReplySection is true */}
                     {showReplySection && <ReplySection message={selectedMessage} type={type} 
