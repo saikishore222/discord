@@ -1,9 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { query,where,getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc,setDoc,orderBy,onSnapshot} from "firebase/firestore";
-import { FieldValue } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { query,where,getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc,setDoc,orderBy,onSnapshot, getCountFromServer} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBe7LVB7NZGQ4ih869GmtX2iwYvE0hzbLE",
@@ -20,32 +18,55 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export const addUserToFirestore = async (user) => {
-  const userRef = doc(db, "users", user.uid);
-
+export const transcations = async () => {
   try {
-    const docSnap = await getDoc(userRef);
+    const uid = auth.currentUser.uid; // Assigning the UID to a variable
+    console.log('uid:', uid); // Logging the UID for debugging purposes
+    const response = await fetch(`https://wallet-api-rust.vercel.app/trans?uid=${uid}`);
+    const data = await response.json();
+    console.log('data:', data);
+    return data; 
+  }
+  catch (error) {
+    console.error('Error fetching transactions data:', error.message); // Handling any errors that occur during the fetch
+  }
+};
 
-    if (!docSnap.exists()) {
-      // Document with this uid does not exist, so add it
-      await addDoc(collection(db, "users"), {
-        uid: user.uid,
-        photo: user.photoURL,
-        displayName: user.displayName,
-        email: user.email,
-        createdAt: Date.now(),
-        isAdmin: false,
-      });
-
-      // Create a private channel for the user
-      // if there is no channel then only create if already exists ignore
-      await createPrivateChannel(user.uid);
-      console.log("User added to Firestore and private channel created.");
-    } else {
-      console.log("Document with uid", user.uid, "already exists.");
-    }
+export const getProfile = async () => {
+  try {
+    const uid = auth.currentUser.uid; // Assigning the UID to a variable
+    console.log('uid:', uid); // Logging the UID for debugging purposes
+    const response = await fetch(`https://wallet-api-rust.vercel.app/profile?uid=${uid}`);
+    const data = await response.json();
+    return data; 
   } catch (error) {
-    console.error("Error adding user to Firestore: ", error);
+    console.error('Error fetching profile data:', error.message); // Handling any errors that occur during the fetch
+  }
+};
+
+
+export const addUserToFirestore = async (user) => {
+  try {
+    const userRef = doc(db, "users", user.uid);
+    // Check if the user document already exists
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      console.log("Document with UID", user.uid, "already exists.");
+      return; // Exit the function if the user document exists
+    }    
+    await setDoc(userRef, {
+      uid: user.uid,
+      photo: user.photoURL,
+      displayName: user.displayName,
+      email: user.email,
+      createdAt: Date.now(),
+      isAdmin: false,
+    });
+    await createPrivateChannel(user.uid);
+    await fetch(`https://wallet-api-rust.vercel.app/wallet?uid=${user.uid}`);
+    console.log("User added successfully to Firestore.");
+  } catch (error) {
+    console.error("Error adding user to Firestore:", error);
   }
 };
 
@@ -67,8 +88,7 @@ export const createPrivateChannel = async (userId) => {
   }
 };
 
-
-export const addMessageToPrivateChannel = async (messageData, setImageLoading) => {
+export const addMessageToPrivateChannel = async (messageData) => {
   const user = auth.currentUser;
   let privateChannelRef ;
 
@@ -87,7 +107,6 @@ export const addMessageToPrivateChannel = async (messageData, setImageLoading) =
   const messagesRef = collection(db, "privateChannels", user.uid, "messages");
 
   // Indicate that the image is being fetched
-  setImageLoading(true);
 
   const imageUrl = await fetchImageForMessage(messageData.text);
 
@@ -107,12 +126,9 @@ export const addMessageToPrivateChannel = async (messageData, setImageLoading) =
     console.error("Error adding message to private channel: ", error);
   } finally {
     // Indicate that the image is now ready to be displayed
-    setImageLoading(false);
-  }
+s  }
 };
 
-
-// Function to listen for messages in the user's private channel
 
 const fetchImageForMessage = async (message) => {
   console.log('fetching image for:', message);
@@ -127,43 +143,53 @@ const fetchImageForMessage = async (message) => {
   }
 };
 
-export const addMessageToChannel = async (channelId, messageData, setImageLoading) => {
+export const addMessageToChannel = async (channelId,messageData,prompt) => {
   // Create channel document if not exists
   const channelRef = doc(db, "channels", channelId);
   await setDoc(channelRef, { name: channelId }, { merge: true });
 
-  const user = auth.currentUser;
+  const user=auth.currentUser;
 
   // Add message to messages subcollection
   const messagesRef = collection(db, "channels", channelId, "messages");
 
   console.log(user);
   console.log(messageData.text);
-
-  // Indicate that the image is being fetched
-  setImageLoading(true);
-
-  const imageUrl = await fetchImageForMessage(messageData.text);
-
+  if(prompt){
+    console.log('prompt:',prompt);
+   console.log(user.uid);
+  await fetch(`https://wallet-api-rust.vercel.app/inprompt?uid=${user.uid}&prompt=${messageData.text}`);
+  const image= await fetchImageForMessage(messageData.text);
   try {
-      await addDoc(messagesRef, {
-          text: messageData.text,
-          userName: user.displayName,
-          userPhoto: user.photoURL,
-          imageUrl: imageUrl,
-          timestamp: Date.now(),
-          likes: 0,
-          replies: 0
-      });
-      console.log("Message added successfully.");
-
-      // Download the image
+    await addDoc(messagesRef, {
+      text: messageData.text,
+      userName: user.displayName,
+      userPhoto: user.photoURL,
+      imageUrl: image,
+      timestamp: Date.now(),
+      likes: 0,
+      replies: 0
+    });
+    console.log("Message added successfully.");
   } catch (error) {
-      console.error("Error adding message: ", error);
-  } finally {
-      // Indicate that the image is now ready to be displayed
-      setImageLoading(false);
+    console.error("Error adding message: ", error);
   }
+  }
+  else{
+  try {
+    await addDoc(messagesRef, {
+      text: messageData.text,
+      userName: user.displayName,
+      userPhoto: user.photoURL,
+      timestamp: Date.now(),
+      likes: 0,
+      replies: 0
+    });
+    console.log("Message added successfully.");
+  } catch (error) {
+    console.error("Error adding message: ", error);
+  }
+}
 };
 
 export const listenForComments = (channelId, messageId, callback) => {
@@ -184,22 +210,6 @@ export const listenForComments = (channelId, messageId, callback) => {
 };
 
 export const listenForMessages = (channelId, callback) => {
-  const user=auth.currentUser;
-  if(channelId === 'Private')
-  {
-    const messagesRef = collection(db, "privateChannels", user.uid, "messages");
-  const orderedMessagesQuery = query(messagesRef, orderBy("timestamp", "desc"));
-
-  const unsubscribe = onSnapshot(orderedMessagesQuery, (snapshot) => {
-    const messages = [];
-    snapshot.forEach((doc) => {
-      messages.push({ id: doc.id, ...doc.data() });
-    });
-    // Reverse the order of messages to display the newest first
-    callback(messages.reverse());
-  }); 
-  return unsubscribe; // Return the unsubscribe function
-  }
   const messagesRef = collection(db, "channels", channelId, "messages");
   const orderedMessagesQuery = query(messagesRef, orderBy("timestamp", "desc"));
 
@@ -301,8 +311,8 @@ export const getAllCommentsFromMessage = async (channelId, messageId) => {
 };
 
 export const updateLikesInFirebase = async (channelId, messageId, newLikesCount) => {
-  console.log('Updating likes in Firebase:', channelId, messageId, newLikesCount);
-  const messageRef = doc(db, "channels", channelId, "messages", messageId);
+  const messageRef = doc(db, `channels/${channelId}/messages/${messageId}`);
+
   try {
       await updateDoc(messageRef, {
           likes: newLikesCount,

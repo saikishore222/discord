@@ -1,58 +1,59 @@
-import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLaugh, faPalette, faImage, faFileAlt, faFont } from '@fortawesome/free-solid-svg-icons';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import FlutterDashOutlinedIcon from '@mui/icons-material/FlutterDashOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import ImageIcon from '@mui/icons-material/Image';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBulletedOutlined';
+import { useState, useEffect } from 'react';
+import { auth } from '../firebase';
 
 const Sidebar = () => {
-    const items = [
-        { label: 'Memes', href: '/Chat?type=Memes', icon: faLaugh },
-        { label: 'Logos', href: '/Chat?type=Logos', icon: faPalette },
-        { label: 'Images', href: '/Chat?type=Images', icon: faImage },
-        { label: 'Resumes', href: '/Chat?type=Resumes', icon: faFileAlt },
-        { label: 'Texts', href: '/Chat?type=Texts', icon: faFont },
-    ];
-    const [isMobile, setIsMobile] = useState(false);
-
+    const [user, setUser] = useState('');
     useEffect(() => {
-        const checkScreenWidth = () => {
-            setIsMobile(window.innerWidth <= 768); // Adjust the threshold as needed
-        };
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            setUser(user); // Update user state based on authentication status
+        });
 
-        checkScreenWidth();
-        window.addEventListener('resize', checkScreenWidth);
-
-        return () => {
-            window.removeEventListener('resize', checkScreenWidth);
-        };
+        return () => unsubscribeAuth(); // Clean up the listener when the component unmounts
     }, []);
 
+    const items = [
+        { label: 'Memes', href: '/Chat?type=Memes', icon: <FlutterDashOutlinedIcon fontSize='large' /> },
+        { label: 'Logos', href: '/Chat?type=Logos', icon: <BusinessOutlinedIcon fontSize='large' /> },
+        { label: 'Images', href: '/Chat?type=Images', icon: <ImageIcon fontSize='large' /> },
+        { label: 'Resumes', href: '/Chat?type=Resumes', icon: <AssignmentOutlinedIcon fontSize='large' /> },
+        { label: 'Texts', href: '/Chat?type=Texts', icon: <FormatListBulletedOutlinedIcon fontSize='large' /> },
+    ];
+
     return (
-        <>
-            {isMobile ? null  : (
-                <div className="w-72 mt-16 bg-white h-full fixed shadow-md opacity-100" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    <div className="flex flex-col p-4 space-y-2">
-                        {items.map((item, index) => (
-                            <Link key={index} href="/chat?type=[type]" as={item.href}>
-                                <div className='flex items-center p-3 rounded-lg hover:bg-gray-100 transition duration-300 ease-in-out'>
-                                    <FontAwesomeIcon icon={item.icon} className="text-xl text-gray-600 mr-4" size="lg" />
-                                    <span className="text-lg font-medium text-gray-900">{item.label}</span>
-                                </div>
-                            </Link>
-                        ))}
+        <div className="w-[18%] bg-white shadow-md opacity-100  fixed left-0 h-screen" style={{ fontFamily: 'Arial, sans-serif' }}>
+            <div className="flex flex-col p-4 space-y-2 ">
+                <Link href="/Chat?type=Home">
+                    <div className='flex items-center p-3 rounded-lg hover:bg-sky-100 transition duration-300 ease-in-out'>
+                        <HomeOutlinedIcon fontSize='large' />
+                        <span className="text-xl text-black-400 ml-4">Public</span>
                     </div>
-                    <div className="border-t border-gray-200"></div>
-                    <div className="flex flex-col p-4 space-y-2">
-                        <span className="text-lg font-semibold text-gray-900">Private Channels</span>
-                        <div className='flex items-center p-3 rounded-lg hover:bg-gray-100 transition duration-300 ease-in-out'>
-                            <FontAwesomeIcon icon={faFileAlt} className="text-xl text-gray-600 mr-4" size="lg" />
-                            <Link href="/Chat?type=Private">
-                                <span className="text-lg font-medium text-gray-900">My Channel</span>
-                            </Link>
+                </Link>
+                {user ? (
+                    <Link href="/Chat?type=Private">
+                        <div className='flex items-center p-3 rounded-lg hover:bg-sky-100 transition duration-300 ease-in-out'>
+                            <LockOutlinedIcon fontSize='large' />
+                            <span className="text-xl text-black-400 ml-4">Private</span>
                         </div>
-                    </div>
-                </div>
-            )}
-        </>
+                    </Link>
+                ) : ''}
+                {items.map((item, index) => (
+                    <Link key={index} href={item.href}>
+                        <div className='flex items-center p-3 rounded-lg hover:bg-sky-100 transition duration-300 ease-in-out'>
+                            {item.icon}
+                            <span className="text-xl text-black-400 ml-4">{item.label}</span>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </div>
     );
 };
 
